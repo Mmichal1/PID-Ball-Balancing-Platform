@@ -20,7 +20,6 @@ def detectAndMarkAruco(frame, arucoDetector):
             cX = int((topLeft[0] + bottomRight[0]) / 2.0)
             cY = int((topLeft[1] + bottomRight[1]) / 2.0)
             cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
-            cv.putText(frame, f'Twoja stara', (cX, cY), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             cv.putText(frame, str(
                 markerID), (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
