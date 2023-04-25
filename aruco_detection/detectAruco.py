@@ -1,6 +1,9 @@
 from picamera2 import Picamera2
 import time
 import cv2 as cv
+import json
+import numpy as np
+from datetime import datetime
 
 def detectAndMarkAruco(frame, arucoDetector):
     markerCorners, markerIds, rejectedCandidates = arucoDetector.detectMarkers(frame)
@@ -25,6 +28,23 @@ def detectAndMarkAruco(frame, arucoDetector):
 
     return frame
 
+def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
+
+    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    markerCorners, markerIDs, rejectedCandidates = arucoDetector.detectMarkers(gray)
+
+    if len(markerCorners) > 0:
+        for i in range(0, len(markerIDs)):
+
+            rvec, tvec, markerPoints = cv.aruco.estimatePoseSingleMarkers(markerCorners[i], 0.02, matrixCoeff, distortionCoeff)
+            cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec, tvec, 0.02)
+
+        markerIDs = markerIDs.flatten()
+        cv.aruco.drawDetectedMarkers(frame, markerCorners, markerIDs)
+            
+    return frame
+
+
 def main(args=None):
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
@@ -37,13 +57,22 @@ def main(args=None):
     camera.configure("preview")
     camera.start()
 
+    with open('../camera_calibration/camera.json', 'r') as json_file:
+        camera_data = json.load(json_file)
+        dist = np.array(camera_data["dist"])
+        mtx = np.array(camera_data["mtx"])
+
     time.sleep(0.1)
 
     while True:
-        frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
+        # frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
+        frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
         cv.imshow("Camera", frame)
-        if cv.waitKey(1) == ord("q"):
+        key = cv.waitKey(1) & 0xFF
+        if key == ord('q'):
             break
+        if key == ord('c'):
+            cv.imwrite(f"output_images/camera_{datetime.now().strftime('%H%M%S')}.jpeg", frame)
 
     cv.destroyAllWindows()
 
