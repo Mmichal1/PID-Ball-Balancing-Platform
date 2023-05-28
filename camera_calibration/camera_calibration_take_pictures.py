@@ -4,8 +4,7 @@ import time
 
 def main(args=None):
     camera = Picamera2()
-    # camera.preview_configuration.main.size = (640, 480)
-    camera.options["quality"] = 95
+    camera.preview_configuration.main.size = (640, 480)
     camera.preview_configuration.main.format = "RGB888"
     camera.preview_configuration.align()
     camera.configure("preview")

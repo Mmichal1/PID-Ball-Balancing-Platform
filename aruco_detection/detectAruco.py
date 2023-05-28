@@ -32,15 +32,32 @@ def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     markerCorners, markerIDs, rejectedCandidates = arucoDetector.detectMarkers(gray)
+    markerSizeInM = 0.099
 
     if len(markerCorners) > 0:
         for i in range(0, len(markerIDs)):
 
-            rvec, tvec, markerPoints = cv.aruco.estimatePoseSingleMarkers(markerCorners[i], 0.02, matrixCoeff, distortionCoeff)
-            cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec, tvec, 0.02)
+            rvec, tvec, markerPoints = cv.aruco.estimatePoseSingleMarkers(markerCorners[i], markerSizeInM, matrixCoeff, distortionCoeff)
+            cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec, tvec, markerSizeInM)
 
         markerIDs = markerIDs.flatten()
-        cv.aruco.drawDetectedMarkers(frame, markerCorners, markerIDs)
+        # cv.aruco.drawDetectedMarkers(frame, markerCorners, markerIDs)
+
+
+        for (markerCorner, markerID) in zip(markerCorners, markerIDs):
+            (topLeft, topRight, bottomRight, bottomLeft) = markerCorner.reshape((4, 2))
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+            cv.line(frame, topLeft, topRight, (0, 255, 0), 2)
+            cv.line(frame, topRight, bottomRight, (0, 255, 0), 2)
+            cv.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
+            cv.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
+            distance = np.sqrt(
+                tvec[0][0][2] ** 2 + tvec[0][0][0] ** 2 + tvec[0][0][1] ** 2
+            )
+            cv.putText(frame, f'{distance:.2f}m', (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             
     return frame
 

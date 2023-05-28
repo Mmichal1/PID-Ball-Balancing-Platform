@@ -7,14 +7,14 @@ from datetime import datetime
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 rows = 7
-columns = 7
+columns = 10
 objp = np.zeros((rows*columns,3), np.float32)
 objp[:,:2] = np.mgrid[0:columns,0:rows].T.reshape(-1,2)
 
 objpoints = []
 imgpoints = []
 
-images = glob.glob('camera_*.jpeg')
+images = glob.glob('source_images/camera_*.jpeg')
 print(len(images), "images found")
 
 for fname in images:
