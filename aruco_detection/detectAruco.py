@@ -116,11 +116,18 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
         
         ball_size = 2 * int(radius)
 
+        height, width, _ = frame.shape
+
+        # Transform the x and y coordinates
+        x_transformed = x - width / 2
+        y_transformed = height / 2 - y
+        
+
         # Estimate distance
         distance = (known_ball_size * camera_focal_len) / ball_size
     
         # Convert distance to translation vector
-        print(int(x), int(y), distance)
+        print(x_transformed, y_transformed, distance)
         cv.circle(frame, (int(x), int(y)), 4, (0, 0, 255), -1)
 
     return frame
