@@ -3,6 +3,7 @@ import time
 import cv2 as cv
 import json
 import numpy as np
+import math
 from datetime import datetime
 
 
@@ -11,7 +12,12 @@ class Point:
         self.distance = distance
         self.coordinates = coordinates
 
-def estimate_aruco_pose(frame, matrixCoeff, distortionCoeff, aruco_detector):
+def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
+
+    known_ball_size = 0.065
+
+    ball_coordinates = detect_ball(frame, known_ball_size, int(matrix_coeff[0][0]))
+    
 
     list_of_points = []
 
@@ -19,17 +25,17 @@ def estimate_aruco_pose(frame, matrixCoeff, distortionCoeff, aruco_detector):
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     marker_corners, marker_ids, _ = aruco_detector.detectMarkers(gray)
-    markerSizeInM = 0.057
+    marker_size_m = 0.057
 
     if len(marker_corners) > 0:
         marker_ids = marker_ids.flatten()
         
-        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(marker_corners, markerSizeInM, matrixCoeff, distortionCoeff)
+        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, matrix_coeff, distortion_coeff)
 
         markers_center = []
 
         for (marker_corner, _, i) in zip(marker_corners, marker_ids, range(0, marker_ids.size)):
-            cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec[i], tvec[i], markerSizeInM)
+            cv.drawFrameAxes(frame, matrix_coeff, distortion_coeff, rvec[i], tvec[i], marker_size_m)
             (top_left, top_right, bottom_right, bottom_left) = marker_corner.reshape((4, 2))
             top_right = (int(top_right[0]), int(top_right[1]))
             bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
@@ -56,7 +62,14 @@ def estimate_aruco_pose(frame, matrixCoeff, distortionCoeff, aruco_detector):
             sorted_points = sorted(list_of_points, key=lambda p: p.distance, reverse=True)
             print(f'{sorted_points[0].distance} {sorted_points[0].coordinates}')
             cv.circle(frame, sorted_points[0].coordinates, 10, (0, 0, 255), -1)
-        
+
+            cv.line(frame, sorted_points[0].coordinates, ball_coordinates, (0, 255, 0), 2)
+
+            result = tuple(x - y for x, y in zip(sorted_points[0].coordinates, ball_coordinates))
+            print(result)
+
+    cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
+
     return frame
 
 
@@ -88,24 +101,15 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
         
         ball_size = 2 * int(radius)
 
-        height, width, _ = frame.shape
-
-        # Transform the x and y coordinates
-        x_transformed = x - width / 2
-        y_transformed = height / 2 - y
-        
-
         # Estimate distance
         distance = (known_ball_size * camera_focal_len) / ball_size
     
         # Convert distance to translation vector
-        print(x_transformed, y_transformed, distance)
-        cv.circle(frame, (int(x), int(y)), 4, (0, 0, 255), -1)
+        print(int(x), int(y), distance)
 
-    return frame
+    return (int(x), int(y))
 
 def main(args=None):
-    known_ball_size = 0.065
 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
@@ -127,8 +131,8 @@ def main(args=None):
 
     while True:
         # frame = detect_markers(camera.capture_array(), aruco_detector)
-        frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
-        frame = estimate_aruco_pose(frame, mtx, dist, arucoDetector)
+        # frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
+        frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
