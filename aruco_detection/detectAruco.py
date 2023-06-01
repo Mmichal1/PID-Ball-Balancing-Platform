@@ -132,7 +132,7 @@ def main(args=None):
 
     aruco_dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     aruco_parameters = cv.aruco.DetectorParameters()
-    aruco_detector = cv.aruco.aruco_detector(aruco_dictionary, aruco_parameters)
+    aruco_detector = cv.aruco.arucoDetector(aruco_dictionary, aruco_parameters)
 
     camera = Picamera2()
     camera.preview_configuration.main.size = (640, 480)
