@@ -176,8 +176,8 @@ def main(args=None):
 
     while True:
         # frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
-        # frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
-        frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
+        frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
+        # frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
         #print(mtx[0][0])
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
