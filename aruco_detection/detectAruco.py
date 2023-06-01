@@ -11,101 +11,74 @@ class Point:
         self.distance = distance
         self.coordinates = coordinates
 
-def detectAndMarkAruco(frame, arucoDetector):
-    markerCorners, markerIds, _ = arucoDetector.detectMarkers(frame)
+def detect_markers(frame, aruco_detector):
+    marker_corners, marker_ids, _ = aruco_detector.detectMarkers(frame)
 
-    if len(markerCorners) > 0:
-        markerIds = markerIds.flatten()
-        for (markerCorner, markerID) in zip(markerCorners, markerIds):
-            (topLeft, topRight, bottomRight, bottomLeft) = markerCorner.reshape((4, 2))
-            topRight = (int(topRight[0]), int(topRight[1]))
-            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-            topLeft = (int(topLeft[0]), int(topLeft[1]))
-            cv.line(frame, topLeft, topRight, (0, 255, 0), 2)
-            cv.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-            cv.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-            cv.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+    if len(marker_corners) > 0:
+        marker_ids = marker_ids.flatten()
+        for (marker_corner, marker_id) in zip(marker_corners, marker_ids):
+            (top_left, top_right, bottom_right, bottom_left) = marker_corner.reshape((4, 2))
+            top_right = (int(top_right[0]), int(top_right[1]))
+            bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
+            bottom_left = (int(bottom_left[0]), int(bottom_left[1]))
+            top_left = (int(top_left[0]), int(top_left[1]))
+            cv.line(frame, top_left, top_right, (0, 255, 0), 2)
+            cv.line(frame, top_right, bottom_right, (0, 255, 0), 2)
+            cv.line(frame, bottom_right, bottom_left, (0, 255, 0), 2)
+            cv.line(frame, bottom_left, top_left, (0, 255, 0), 2)
+            cX = int((top_left[0] + bottom_right[0]) / 2.0)
+            cY = int((top_left[1] + bottom_right[1]) / 2.0)
             cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
             cv.putText(frame, str(
-                markerID), (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                marker_id), (top_left[0], top_left[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     return frame
 
-def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
+def estimate_aruco_pose(frame, matrixCoeff, distortionCoeff, aruco_detector):
 
     list_of_points = []
 
-    # kernel = np.ones((5,5),np.float32)/25
-    # frame = cv.filter2D(frame,-1,kernel)
     frame = cv.bilateralFilter(frame,9,100,100)
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    markerCorners, markerIDs, _ = arucoDetector.detectMarkers(gray)
+    marker_corners, marker_ids, _ = aruco_detector.detectMarkers(gray)
     markerSizeInM = 0.057
 
-    if len(markerCorners) > 0:
-        # for i in range(0, len(markerIDs)):
-
-            # rvec, tvec, markerPoints = cv.aruco.estimatePoseSingleMarkers(markerCorners[i], markerSizeInM, matrixCoeff, distortionCoeff)
-            # cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec, tvec, markerSizeInM)
-
-        # cv.aruco.drawDetectedMarkers(frame, markerCorners, markerIDs)
-
+    if len(marker_corners) > 0:
+        marker_ids = marker_ids.flatten()
         
-        markerIDs = markerIDs.flatten()
-        # print(markerCorners)
-        
-        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(markerCorners, markerSizeInM, matrixCoeff, distortionCoeff)
+        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(marker_corners, markerSizeInM, matrixCoeff, distortionCoeff)
 
-        markersCenter = []
+        markers_center = []
 
-        for (markerCorner, markerID, i) in zip(markerCorners, markerIDs, range(0, markerIDs.size)):
+        for (marker_corner, _, i) in zip(marker_corners, marker_ids, range(0, marker_ids.size)):
             cv.drawFrameAxes(frame, matrixCoeff, distortionCoeff, rvec[i], tvec[i], markerSizeInM)
-            # print(tvec[i])
-            (topLeft, topRight, bottomRight, bottomLeft) = markerCorner.reshape((4, 2))
-            topRight = (int(topRight[0]), int(topRight[1]))
-            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-            topLeft = (int(topLeft[0]), int(topLeft[1]))
-            # print(topRight)
-            cv.line(frame, topLeft, topRight, (0, 255, 0), 2)
-            cv.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-            cv.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-            cv.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-            markersCenter.append((cX, cY))
+            (top_left, top_right, bottom_right, bottom_left) = marker_corner.reshape((4, 2))
+            top_right = (int(top_right[0]), int(top_right[1]))
+            bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
+            bottom_left = (int(bottom_left[0]), int(bottom_left[1]))
+            top_left = (int(top_left[0]), int(top_left[1]))
+            cv.line(frame, top_left, top_right, (0, 255, 0), 2)
+            cv.line(frame, top_right, bottom_right, (0, 255, 0), 2)
+            cv.line(frame, bottom_right, bottom_left, (0, 255, 0), 2)
+            cv.line(frame, bottom_left, top_left, (0, 255, 0), 2)
+            cX = int((top_left[0] + bottom_right[0]) / 2.0)
+            cY = int((top_left[1] + bottom_right[1]) / 2.0)
+            markers_center.append((cX, cY))
             distance = np.sqrt(tvec[i][0][2] ** 2 + tvec[i][0][0] ** 2 + tvec[i][0][1] ** 2)
-            cv.putText(frame, f'{distance:.2f}m', (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            
-        # print(markersCenter[0][0])
-        if len(markerCorners) > 1:
-
-            for i in range(len(markerIDs)):
-                for j in range(i + 1, len(markerIDs)):
-#                    cv.line(frame, markersCenter[i], markersCenter[j], (0, 255, 0), 2)
+            cv.putText(frame, f'{distance:.2f}m', (top_left[0], top_left[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        
+        if len(marker_corners) > 1:
+            for i in range(len(marker_ids)):
+                for j in range(i + 1, len(marker_ids)):
                     distance = np.linalg.norm(tvec[i]-tvec[j])
-                    middle = (int((markersCenter[i][0] + markersCenter[j][0]) / 2), int((markersCenter[i][1] + markersCenter[j][1]) / 2))
-                    # print(middle)
+                    middle = (int((markers_center[i][0] + markers_center[j][0]) / 2), int((markers_center[i][1] + markers_center[j][1]) / 2))
                     list_of_points.append(Point(distance=distance, coordinates=(middle)))
 
- #                   cv.circle(frame, middle, 4, (0, 0, 255), -1)
-  #                  cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         if (len(list_of_points) > 0):            
             sorted_points = sorted(list_of_points, key=lambda p: p.distance, reverse=True)
             print(f'{sorted_points[0].distance} {sorted_points[0].coordinates}')
             cv.circle(frame, sorted_points[0].coordinates, 10, (0, 0, 255), -1)
-            # for i in range(0, len(markerIDs) - 1):
-            #     cv.line(frame, markersCenter[i], markersCenter[i+1], (0, 255, 0), 2)
-            #     distance = np.linalg.norm(tvec[i]-tvec[i+1])
-            #     middle = (int((markersCenter[i][0] + markersCenter[i + 1][0]) /2), int((markersCenter[i][1] + markersCenter[i + 1][1]) /2))
-            #     # print(middle)
-
-            #     cv.circle(frame, middle, 4, (0, 0, 255), -1)
-            #     cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         
     return frame
 
@@ -157,9 +130,9 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
 def main(args=None):
     known_ball_size = 0.065
 
-    arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
-    arucoParameters = cv.aruco.DetectorParameters()
-    arucoDetector = cv.aruco.ArucoDetector(arucoDictionary, arucoParameters)
+    aruco_dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
+    aruco_parameters = cv.aruco.DetectorParameters()
+    aruco_detector = cv.aruco.aruco_detector(aruco_dictionary, aruco_parameters)
 
     camera = Picamera2()
     camera.preview_configuration.main.size = (640, 480)
@@ -176,10 +149,9 @@ def main(args=None):
     time.sleep(0.1)
 
     while True:
-        # frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
-        frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
+        # frame = detect_markers(camera.capture_array(), aruco_detector)
+        frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, aruco_detector)
         # frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
-        #print(mtx[0][0])
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
