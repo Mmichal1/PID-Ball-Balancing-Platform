@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def detectAndMarkAruco(frame, arucoDetector):
-    markerCorners, markerIds, rejectedCandidates = arucoDetector.detectMarkers(frame)
+    markerCorners, markerIds, _ = arucoDetector.detectMarkers(frame)
 
     if len(markerCorners) > 0:
         markerIds = markerIds.flatten()
@@ -36,7 +36,7 @@ def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
     frame = cv.bilateralFilter(frame,9,100,100)
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    markerCorners, markerIDs, rejectedCandidates = arucoDetector.detectMarkers(gray)
+    markerCorners, markerIDs, _ = arucoDetector.detectMarkers(gray)
     markerSizeInM = 0.057
 
     if len(markerCorners) > 0:
@@ -88,7 +88,45 @@ def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
     return frame
 
 
+def detect_ball(frame, known_ball_size, camera_focal_len):
+    # Convert the image to HSV color space
+    hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+
+    # Define the lower and upper bounds for the ball color (example values)
+    lower_color = np.array([0, 150, 190])
+    upper_color = np.array([180, 255, 255])
+
+    # Create a mask for the ball color
+    mask = cv.inRange(hsv, lower_color, upper_color)
+
+    # Apply morphological operations to remove noise
+    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+
+    # Find contours of the ball
+    contours, _ = cv.findContours(
+        mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+
+    # Find the largest contour (assumed to be the ball)
+    if len(contours) > 0:
+        ball_contour = max(contours, key=cv.contourArea)
+        (x, y), radius = cv.minEnclosingCircle(ball_contour)
+        # return (int(x), int(y)), int(radius)
+        
+        ball_size = 2 * int(radius)
+
+        # Estimate distance
+        distance = (known_ball_size * camera_focal_len) / ball_size
+
+        # Convert distance to translation vector
+        return frame, [int(x), int(y), distance]
+
+    return None
+
 def main(args=None):
+    known_ball_size = 0.065
+
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
     arucoDetector = cv.aruco.ArucoDetector(arucoDictionary, arucoParameters)
@@ -103,13 +141,15 @@ def main(args=None):
     with open('../camera_calibration/camera.json', 'r') as json_file:
         camera_data = json.load(json_file)
         dist = np.array(camera_data["dist"])
-        mtx = np.array(camera_data["mtx"])
+        mtx = np.array(camera_data["mtx"]) # camera focal length is mtx[0][0]
 
     time.sleep(0.1)
 
     while True:
         # frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
-        frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
+        # frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
+        frame, translation_vector = detect_ball(camera.capture_array(), known_ball_size, mtx[0][0])
+        print(translation_vector)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
