@@ -130,9 +130,9 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
 def main(args=None):
     known_ball_size = 0.065
 
-    aruco_dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
-    aruco_parameters = cv.aruco.DetectorParameters()
-    aruco_detector = cv.aruco.arucoDetector(aruco_dictionary, aruco_parameters)
+    arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
+    arucoParameters = cv.aruco.DetectorParameters()
+    arucoDetector = cv.aruco.ArucoDetector(arucoDictionary, arucoParameters)
 
     camera = Picamera2()
     camera.preview_configuration.main.size = (640, 480)
