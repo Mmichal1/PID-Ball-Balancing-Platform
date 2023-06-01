@@ -118,11 +118,12 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
 
         # Estimate distance
         distance = (known_ball_size * camera_focal_len) / ball_size
-
+    
         # Convert distance to translation vector
-        return frame, [int(x), int(y), distance]
+        print(int(x), int(y), distance)
+        cv.circle(frame, (int(x), int(y)), 4, (0, 0, 255), -1)
 
-    return None
+    return frame
 
 def main(args=None):
     known_ball_size = 0.065
@@ -148,8 +149,8 @@ def main(args=None):
     while True:
         # frame = detectAndMarkAruco(camera.capture_array(), arucoDetector)
         # frame = poseEstimationAruco(camera.capture_array(), mtx, dist, arucoDetector)
-        frame, translation_vector = detect_ball(camera.capture_array(), known_ball_size, mtx[0][0])
-        print(translation_vector)
+        frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
+        #print(mtx[0][0])
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
