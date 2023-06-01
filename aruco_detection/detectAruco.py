@@ -58,7 +58,7 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
                     middle = (int((markers_center[i][0] + markers_center[j][0]) / 2), int((markers_center[i][1] + markers_center[j][1]) / 2))
                     list_of_points.append(Point(distance=distance, coordinates=(middle)))
 
-        if (len(list_of_points) > 0):            
+        if len(list_of_points) > 0 and ball_coordinates is not None:            
             sorted_points = sorted(list_of_points, key=lambda p: p.distance, reverse=True)
             print(f'{sorted_points[0].distance} {sorted_points[0].coordinates}')
             cv.circle(frame, sorted_points[0].coordinates, 10, (0, 0, 255), -1)
@@ -68,7 +68,7 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
             result = tuple(x - y for x, y in zip(sorted_points[0].coordinates, ball_coordinates))
             print(result)
 
-    cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
+            cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
 
     return frame
 
@@ -107,7 +107,9 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
         # Convert distance to translation vector
         print(int(x), int(y), distance)
 
-    return (int(x), int(y))
+        return (int(x), int(y))
+
+    return None
 
 def main(args=None):
 
