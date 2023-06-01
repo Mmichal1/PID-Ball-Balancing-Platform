@@ -1,0 +1,5 @@
+(hMin = 0 , sMin = 152, vMin = 189), (hMax = 179 , sMax = 255, vMax = 228)
+
+https://stackoverflow.com/questions/10948589/choosing-the-correct-upper-and-lower-hsv-boundaries-for-color-detection-withcv/48367205#48367205
+
+red lid size: 6,5cm
