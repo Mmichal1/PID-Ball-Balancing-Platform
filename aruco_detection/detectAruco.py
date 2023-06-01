@@ -6,6 +6,11 @@ import numpy as np
 from datetime import datetime
 
 
+class Point:
+    def __init__(self, distance: float, coordinates: 'tuple[int, int]'):    
+        self.distance = distance
+        self.coordinates = coordinates
+
 def detectAndMarkAruco(frame, arucoDetector):
     markerCorners, markerIds, _ = arucoDetector.detectMarkers(frame)
 
@@ -30,6 +35,8 @@ def detectAndMarkAruco(frame, arucoDetector):
     return frame
 
 def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
+
+    list_of_points = []
 
     # kernel = np.ones((5,5),np.float32)/25
     # frame = cv.filter2D(frame,-1,kernel)
@@ -83,10 +90,13 @@ def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
                     distance = np.linalg.norm(tvec[i]-tvec[j])
                     middle = (int((markersCenter[i][0] + markersCenter[j][0]) / 2), int((markersCenter[i][1] + markersCenter[j][1]) / 2))
                     # print(middle)
+                    list_of_points.append(Point(distance=distance, coordinates=(middle)))
 
                     cv.circle(frame, middle, 4, (0, 0, 255), -1)
                     cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
                     
+        sorted_points = sorted(list_of_points, key=lambda p: p.distance)
+        print(sorted_points[0])
             # for i in range(0, len(markerIDs) - 1):
             #     cv.line(frame, markersCenter[i], markersCenter[i+1], (0, 255, 0), 2)
             #     distance = np.linalg.norm(tvec[i]-tvec[i+1])
