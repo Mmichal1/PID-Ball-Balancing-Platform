@@ -11,29 +11,6 @@ class Point:
         self.distance = distance
         self.coordinates = coordinates
 
-def detect_markers(frame, aruco_detector):
-    marker_corners, marker_ids, _ = aruco_detector.detectMarkers(frame)
-
-    if len(marker_corners) > 0:
-        marker_ids = marker_ids.flatten()
-        for (marker_corner, marker_id) in zip(marker_corners, marker_ids):
-            (top_left, top_right, bottom_right, bottom_left) = marker_corner.reshape((4, 2))
-            top_right = (int(top_right[0]), int(top_right[1]))
-            bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
-            bottom_left = (int(bottom_left[0]), int(bottom_left[1]))
-            top_left = (int(top_left[0]), int(top_left[1]))
-            cv.line(frame, top_left, top_right, (0, 255, 0), 2)
-            cv.line(frame, top_right, bottom_right, (0, 255, 0), 2)
-            cv.line(frame, bottom_right, bottom_left, (0, 255, 0), 2)
-            cv.line(frame, bottom_left, top_left, (0, 255, 0), 2)
-            cX = int((top_left[0] + bottom_right[0]) / 2.0)
-            cY = int((top_left[1] + bottom_right[1]) / 2.0)
-            cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
-            cv.putText(frame, str(
-                marker_id), (top_left[0], top_left[1] - 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-
-    return frame
-
 def estimate_aruco_pose(frame, matrixCoeff, distortionCoeff, aruco_detector):
 
     list_of_points = []
@@ -150,8 +127,8 @@ def main(args=None):
 
     while True:
         # frame = detect_markers(camera.capture_array(), aruco_detector)
-        frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
-        # frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
+        frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
+        frame = estimate_aruco_pose(frame, mtx, dist, arucoDetector)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
