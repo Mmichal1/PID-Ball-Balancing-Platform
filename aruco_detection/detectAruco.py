@@ -76,14 +76,25 @@ def poseEstimationAruco(frame, matrixCoeff, distortionCoeff, arucoDetector):
             
         # print(markersCenter[0][0])
         if len(markerCorners) > 1:
-            for i in range(0, len(markerIDs) - 1):
-                cv.line(frame, markersCenter[i], markersCenter[i+1], (0, 255, 0), 2)
-                distance = np.linalg.norm(tvec[i]-tvec[i+1])
-                middle = (int((markersCenter[i][0] + markersCenter[i + 1][0]) /2), int((markersCenter[i][1] + markersCenter[i + 1][1]) /2))
-                # print(middle)
 
-                cv.circle(frame, middle, 4, (0, 0, 255), -1)
-                cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            for i in range(len(markerIDs)):
+                for j in range(i + 1, len(markerIDs)):
+                    cv.line(frame, markersCenter[i], markersCenter[j], (0, 255, 0), 2)
+                    distance = np.linalg.norm(tvec[i]-tvec[j])
+                    middle = (int((markersCenter[i][0] + markersCenter[j][0]) / 2), int((markersCenter[i][1] + markersCenter[j][1]) / 2))
+                    # print(middle)
+
+                    cv.circle(frame, middle, 4, (0, 0, 255), -1)
+                    cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    
+            # for i in range(0, len(markerIDs) - 1):
+            #     cv.line(frame, markersCenter[i], markersCenter[i+1], (0, 255, 0), 2)
+            #     distance = np.linalg.norm(tvec[i]-tvec[i+1])
+            #     middle = (int((markersCenter[i][0] + markersCenter[i + 1][0]) /2), int((markersCenter[i][1] + markersCenter[i + 1][1]) /2))
+            #     # print(middle)
+
+            #     cv.circle(frame, middle, 4, (0, 0, 255), -1)
+            #     cv.putText(frame, f'{distance:.2f}m', (middle[0] + 5, middle[1] - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         
     return frame
 
