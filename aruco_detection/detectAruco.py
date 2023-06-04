@@ -4,6 +4,7 @@ import cv2 as cv
 import json
 import numpy as np
 import math
+import serial
 from datetime import datetime
 
 """
@@ -14,7 +15,10 @@ from datetime import datetime
  - If not then discard it and used last saved point
 """
 
-platform_middle = ()
+platform_middle = (300, 230)
+previous_platform_middle = (300, 230)
+x_boundaries = (280, 330)
+y_boundaries = (200, 260)
 
 class Segment:
     def __init__(self, length: float, start_point: 'tuple[int, int]', end_point: 'tuple[int, int]'):    
@@ -37,11 +41,11 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
     marker_size_m = 0.047
 
     if len(marker_corners) > 0:
-        marker_ids = marker_ids.flatten()
-        
-        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, matrix_coeff, distortion_coeff)
-
+        global platform_middle
+        global previous_platform_middle
         markers_center = []
+        marker_ids = marker_ids.flatten()
+        rvec, tvec, _ = cv.aruco.estimatePoseSingleMarkers(marker_corners, marker_size_m, matrix_coeff, distortion_coeff)
 
         for (marker_corner, _, i) in zip(marker_corners, marker_ids, range(0, marker_ids.size)):
             cv.drawFrameAxes(frame, matrix_coeff, distortion_coeff, rvec[i], tvec[i], marker_size_m)
@@ -50,10 +54,6 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
             bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
             bottom_left = (int(bottom_left[0]), int(bottom_left[1]))
             top_left = (int(top_left[0]), int(top_left[1]))
-            cv.line(frame, top_left, top_right, (0, 255, 0), 2)
-            cv.line(frame, top_right, bottom_right, (0, 255, 0), 2)
-            cv.line(frame, bottom_right, bottom_left, (0, 255, 0), 2)
-            cv.line(frame, bottom_left, top_left, (0, 255, 0), 2)
             cX = int((top_left[0] + bottom_right[0]) / 2.0)
             cY = int((top_left[1] + bottom_right[1]) / 2.0)
             markers_center.append((cX, cY))
@@ -63,27 +63,37 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
         if len(marker_corners) > 1:
             for i in range(len(marker_ids)):
                 for j in range(i + 1, len(marker_ids)):
+                    
                     distance = np.linalg.norm(tvec[i]-tvec[j])
-                    
                     cv.line(frame, markers_center[i], markers_center[j], (0, 255, 0), 2)
-                    
                     list_of_segments.append(Segment(length=distance, start_point=(markers_center[i]), end_point=(markers_center[j])))
-
+        
         if len(list_of_segments) > 1:            
             
             sorted_segments = sorted(list_of_segments, key=lambda p: p.length, reverse=True)
             platform_middle = find_intersection(sorted_segments[0], sorted_segments[1])
-            cv.circle(frame, platform_middle, 10, (0, 0, 255), -1)
             
-            if ball_coordinates is not None:
-                cv.line(frame, platform_middle, ball_coordinates, (0, 255, 0), 2)
+            if not (platform_middle[0] > x_boundaries[0] and platform_middle[0] < x_boundaries[1] and platform_middle[1] > y_boundaries[0] and platform_middle[1] < y_boundaries[1]):
+                platform_middle = previous_platform_middle
+                
+            previous_platform_middle = platform_middle
+            
+        else: 
+            platform_middle = previous_platform_middle
+            
+        cv.circle(frame, platform_middle, 10, (0, 0, 255), -1)
+        #print(platform_middle)
+            
+        if ball_coordinates is not None:
+            cv.line(frame, platform_middle, ball_coordinates, (0, 255, 0), 2)
+            result = tuple(x - y for x, y in zip(platform_middle, ball_coordinates))
+            # print(result)
+            cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
+            
+            return frame, result
+            
 
-                result = tuple(x - y for x, y in zip(platform_middle, ball_coordinates))
-                print(result)
-
-                cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
-
-    return frame
+    return frame, (0, 0)
 
 
 def detect_ball(frame, known_ball_size, camera_focal_len):
@@ -118,7 +128,7 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
         distance = (known_ball_size * camera_focal_len) / ball_size
     
         # Convert distance to translation vector
-        print(int(x), int(y), distance)
+        # print(int(x), int(y), distance)
 
         return (int(x), int(y))
 
@@ -138,6 +148,9 @@ def find_intersection(segment_one, segment_two):
     
 
 def main(args=None):
+    #serial_port = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    #serial_port.reset_input_buffer()
+    #serial_port.write(b"60,65\n")
 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
@@ -158,7 +171,12 @@ def main(args=None):
     time.sleep(0.1)
 
     while True:
-        frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
+        #serial_port.write(b"%d,%d\n"%(counter, counter))
+        #line = serial_port.readline().decode('utf-8').rstrip()
+        #print(line)
+        
+        frame, result = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
+        print(result)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
