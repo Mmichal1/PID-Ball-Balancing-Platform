@@ -24,7 +24,7 @@ class Segment:
 
 def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
 
-    known_ball_size = 0.065
+    known_ball_size = 0.038
 
     ball_coordinates = detect_ball(frame, known_ball_size, int(matrix_coeff[0][0]))
     
