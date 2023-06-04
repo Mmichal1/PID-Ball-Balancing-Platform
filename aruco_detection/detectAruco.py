@@ -273,12 +273,12 @@ def PID_x(distance):
     print(f'x_PID_p: {x_PID_p},\npid_i: {x_PID_i},\npid_d: {x_PID_d},')
     # print(x_PID_d)
     # x_PID_total = (x_PID_total + 70) * 0.85
-    x_PID_total = map_value(x_PID_total, -190, 190, 45, 80)
+    x_PID_total = map_value(x_PID_total, -190, 190, 50, 85)
 
-    if x_PID_total < 45:
-        x_PID_total = 45
-    if x_PID_total > 80:
-        x_PID_total = 80
+    if x_PID_total < 50:
+        x_PID_total = 50
+    if x_PID_total > 85:
+        x_PID_total = 85
 
     x_distance_previous_error = x_distance_error
 
@@ -317,7 +317,9 @@ def main(args=None):
         print(result)
         
         servo_value_y = PID_y(-result[0])
-        servo_value_x = PID_x(-result[1])
+        #servo_value_y = 60
+        servo_value_x = PID_x(result[1])
+        #servo_value_x = 85
         
         serial_port.write(b"%d,%d\n" % (servo_value_y, servo_value_x))
         # serial_port.write(b"60,65\n")
