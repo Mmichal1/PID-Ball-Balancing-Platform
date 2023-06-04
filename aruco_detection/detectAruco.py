@@ -6,26 +6,35 @@ import numpy as np
 import math
 from datetime import datetime
 
+"""
+ - Find the ranges of possible center positions 
+ Steps of finding the center of the platform:
+ - Check if the calculated point is within possible boundaries 
+ - If yes then save that point as the middle 
+ - If not then discard it and used last saved point
+"""
 
-class Point:
-    def __init__(self, distance: float, coordinates: 'tuple[int, int]'):    
-        self.distance = distance
-        self.coordinates = coordinates
+platform_middle = ()
+
+class Segment:
+    def __init__(self, length: float, start_point: 'tuple[int, int]', end_point: 'tuple[int, int]'):    
+        self.start_point = start_point
+        self.end_point = end_point
+        self.length = length
 
 def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
 
-    known_ball_size = 0.065
+    known_ball_size = 0.038
 
     ball_coordinates = detect_ball(frame, known_ball_size, int(matrix_coeff[0][0]))
     
-
-    list_of_points = []
+    list_of_segments = []
 
     frame = cv.bilateralFilter(frame,9,100,100)
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     marker_corners, marker_ids, _ = aruco_detector.detectMarkers(gray)
-    marker_size_m = 0.057
+    marker_size_m = 0.047
 
     if len(marker_corners) > 0:
         marker_ids = marker_ids.flatten()
@@ -55,18 +64,21 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
             for i in range(len(marker_ids)):
                 for j in range(i + 1, len(marker_ids)):
                     distance = np.linalg.norm(tvec[i]-tvec[j])
-                    middle = (int((markers_center[i][0] + markers_center[j][0]) / 2), int((markers_center[i][1] + markers_center[j][1]) / 2))
-                    list_of_points.append(Point(distance=distance, coordinates=(middle)))
+                    
+                    cv.line(frame, markers_center[i], markers_center[j], (0, 255, 0), 2)
+                    
+                    list_of_segments.append(Segment(length=distance, start_point=(markers_center[i]), end_point=(markers_center[j])))
 
-        if len(list_of_points) > 0:            
-            sorted_points = sorted(list_of_points, key=lambda p: p.distance, reverse=True)
-            print(f'{sorted_points[0].distance} {sorted_points[0].coordinates}')
-            cv.circle(frame, sorted_points[0].coordinates, 10, (0, 0, 255), -1)
-
+        if len(list_of_segments) > 1:            
+            
+            sorted_segments = sorted(list_of_segments, key=lambda p: p.length, reverse=True)
+            platform_middle = find_intersection(sorted_segments[0], sorted_segments[1])
+            cv.circle(frame, platform_middle, 10, (0, 0, 255), -1)
+            
             if ball_coordinates is not None:
-                cv.line(frame, sorted_points[0].coordinates, ball_coordinates, (0, 255, 0), 2)
+                cv.line(frame, platform_middle, ball_coordinates, (0, 255, 0), 2)
 
-                result = tuple(x - y for x, y in zip(sorted_points[0].coordinates, ball_coordinates))
+                result = tuple(x - y for x, y in zip(platform_middle, ball_coordinates))
                 print(result)
 
                 cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
@@ -112,6 +124,19 @@ def detect_ball(frame, known_ball_size, camera_focal_len):
 
     return None
 
+def find_intersection(segment_one, segment_two):
+    x1, y1 = segment_one.start_point
+    x2, y2 = segment_one.end_point
+    x3, y3 = segment_two.start_point
+    x4, y4 = segment_two.end_point
+    
+    # Calculate the intersection point
+    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+    
+    return int(px), int(py)
+    
+
 def main(args=None):
 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
@@ -133,8 +158,6 @@ def main(args=None):
     time.sleep(0.1)
 
     while True:
-        # frame = detect_markers(camera.capture_array(), aruco_detector)
-        # frame = detect_ball(camera.capture_array(), known_ball_size, int(mtx[0][0]))
         frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
