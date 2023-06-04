@@ -1,46 +1,55 @@
 import time
+import RPi.GPIO as GPIO
 
-class PIDController:
-    def __init__(self, Kp, Ki, Kd, setpoint):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.setpoint = setpoint
 
-        self.last_error = 0
-        self.integral = 0
+# Ustalenie wartości początkowych
+distance_previous_error = 0.0
+distance_error = 0.0
+period = 0.05  # Czas odświeżania pętli w sekundach (50 ms)
 
-    def calculate(self, feedback_value):
-        error = self.setpoint - feedback_value
-        self.integral += error
-        derivative = error - self.last_error
+# Ustalenie wartości stałych regulatora PID
+kp = 8.0
+ki = 0.2
+kd = 3100.0
+distance_setpoint = 21.0
+PID_p = 0.0
+PID_i = 0.0
+PID_d = 0.0
+PID_total = 0.0
 
-        output = (self.Kp * error) + (self.Ki * self.integral) + (self.Kd * derivative)
+servo_angle = 60  # Wyjściowy sygnał dla położenia neutralnego
 
-        self.last_error = error
-        return output
+try:
+    while True:
+        if time.time() > period:
+            start_time = time.time()
+            distance = get_dist(100)
+            distance_error = distance_setpoint - distance
+            PID_p = kp * distance_error
+            dist_difference = distance_error - distance_previous_error
+            PID_d = kd * ((distance_error - distance_previous_error) / period)
 
-# Przykładowe wartości współczynników PID oraz punktu zadanego
-Kp = 0.5
-Ki = 0.2
-Kd = 0.1
-setpoint = 0
+            if -3 < distance_error < 3:
+                PID_i += ki * distance_error
+            else:
+                PID_i = 0
 
-# Tworzenie obiektu kontrolera PID
-pid_controller = PIDController(Kp, Ki, Kd, setpoint)
+            PID_total = PID_p + PID_i + PID_d
+            PID_total = (PID_total + 150) * 0.3
 
-# Symulacja ruchu serwomechanizmu
-feedback_value = 0  # Początkowa wartość odczytu z czujnika
-target_time = time.time() + 10  # Czas symulacji - 10 sekund
+            if PID_total < 20:
+                PID_total = 20
+            if PID_total > 160:
+                PID_total = 160
 
-while time.time() < target_time:
-    output = pid_controller.calculate(feedback_value)
+            pwm.ChangeDutyCycle(PID_total)
+            distance_previous_error = distance_error
 
-    # Aktualizacja stanu serwomechanizmu na podstawie wartości wyjściowej
-    # np. ustawianie wychylenia rynny, sterowanie silnikiem, itp.
+            execution_time = time.time() - start_time
+            if execution_time < period:
+                time.sleep(period - execution_time)
+except KeyboardInterrupt:
+    pass
 
-    # Symulacja zmiany wartości odczytu z czujnika w czasie
-    feedback_value += output * 0.1  # Przykładowa zmiana wartości czujnika (0.1 to krok symulacji)
-    time.sleep(0.1)  # Czas oczekiwania na kolejną iterację
-
-print("Symulacja zakończona.")
+pwm.stop()
+GPIO.cleanup()
