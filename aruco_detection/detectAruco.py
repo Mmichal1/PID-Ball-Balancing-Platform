@@ -41,9 +41,9 @@ kd = 0.15
 '''
 
 # Ustalenie wartości stałych regulatora PID
-kp = 0.4
-ki = 0.02
-kd = 0.15
+kp = 0.38
+ki = 0.022
+kd = 0.1
 distance_setpoint = 0.0
 y_PID_p = 0.0
 y_PID_i = 0.0
@@ -222,7 +222,7 @@ def PID_y(distance):
     y_PID_p = kp * y_distance_error
     y_PID_d = kd * ((y_distance_error - y_distance_previous_error) / period)
 
-    if -30 < y_distance_error < 30:
+    if -40 < y_distance_error < 40:
         y_PID_i += ki * y_distance_error
     else:
         y_PID_i = 0
@@ -231,18 +231,18 @@ def PID_y(distance):
     print(f'y_PID_p: {y_PID_p},\npid_i: {y_PID_i},\npid_d: {y_PID_d},')
     #print(y_PID_d)
     #y_PID_total = (y_PID_total + 70) * 0.85
-    y_PID_total = map_value(y_PID_total, -190, 190, 45, 80)
+    y_PID_total = map_value(y_PID_total, -190, 190, 41, 78)
     
 
 
-    if y_PID_total < 45:
-        y_PID_total = 45
-    if y_PID_total > 80:
-        y_PID_total = 80
+    if y_PID_total < 41:
+        y_PID_total = 41
+    if y_PID_total > 78:
+        y_PID_total = 78
 
     y_distance_previous_error = y_distance_error
         
-    #print (int(y_PID_total))
+    print (f'Y TOTAL:{int(y_PID_total)}')
     
     return int(y_PID_total)
 
@@ -264,7 +264,7 @@ def PID_x(distance):
     x_PID_p = kp * x_distance_error
     x_PID_d = kd * ((x_distance_error - x_distance_previous_error) / period)
 
-    if -30 < x_distance_error < 30:
+    if -40 < x_distance_error < 40:
         x_PID_i += ki * x_distance_error
     else:
         x_PID_i = 0
@@ -273,16 +273,16 @@ def PID_x(distance):
     print(f'x_PID_p: {x_PID_p},\npid_i: {x_PID_i},\npid_d: {x_PID_d},')
     # print(x_PID_d)
     # x_PID_total = (x_PID_total + 70) * 0.85
-    x_PID_total = map_value(x_PID_total, -190, 190, 50, 85)
+    x_PID_total = map_value(x_PID_total, -190, 190, 51, 86)
 
-    if x_PID_total < 50:
-        x_PID_total = 50
-    if x_PID_total > 85:
-        x_PID_total = 85
+    if x_PID_total < 51:
+        x_PID_total = 51
+    if x_PID_total > 86:
+        x_PID_total = 86
 
     x_distance_previous_error = x_distance_error
 
-    # print (int(x_PID_total))
+    print (f'X TOTAL:{int(x_PID_total)}')
 
     return int(x_PID_total)
 
@@ -297,6 +297,7 @@ def main(args=None):
 
     camera = Picamera2()
     camera.preview_configuration.main.size = (640, 480)
+    #camera.preview_configuration.main.size = (1296, 972)
     camera.preview_configuration.main.format = "RGB888"
     camera.preview_configuration.align()
     camera.configure("preview")
@@ -317,9 +318,9 @@ def main(args=None):
         print(result)
         
         servo_value_y = PID_y(-result[0])
-        #servo_value_y = 60
+        #servo_value_y = 58
         servo_value_x = PID_x(result[1])
-        #servo_value_x = 85
+        #servo_value_x = 67
         
         serial_port.write(b"%d,%d\n" % (servo_value_y, servo_value_x))
         # serial_port.write(b"60,65\n")
@@ -338,16 +339,16 @@ def main(args=None):
         
         
         
-        #cv.imshow("Camera", frame)
-        #key = cv.waitKey(1) & 0xFF
-        #if key == ord('q'):
-        #    break
-        #if key == ord('c'):
-        #    cv.imwrite(f"output_images/camera_{datetime.now().strftime('%H%M%S')}.jpeg", frame)
+        cv.imshow("Camera", frame)
+        key = cv.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+        if key == ord('c'):
+            cv.imwrite(f"output_images/camera_{datetime.now().strftime('%H%M%S')}.jpeg", frame)
             
         time.sleep(period)
 
-    #cv.destroyAllWindows()
+    cv.destroyAllWindows()
 
 if __name__=='__main__':
     main()
