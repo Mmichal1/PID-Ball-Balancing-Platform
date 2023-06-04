@@ -28,8 +28,10 @@ ball_y_boundaries = (-220, 220)
 center_tvec = [0, 0, 0]
 
 # Ustalenie wartości początkowych
-distance_previous_error = 0.0
-distance_error = 0.0
+y_distance_previous_error = 0.0
+y_distance_error = 0.0
+x_distance_previous_error = 0.0
+x_distance_error = 0.0
 period = 0.05  # Czas odświeżania pętli w sekundach (50 ms)
 
 '''
@@ -43,10 +45,14 @@ kp = 0.4
 ki = 0.02
 kd = 0.15
 distance_setpoint = 0.0
-PID_p = 0.0
-PID_i = 0.0
-PID_d = 0.0
-PID_total = 0.0
+y_PID_p = 0.0
+y_PID_i = 0.0
+y_PID_d = 0.0
+y_PID_total = 0.0
+x_PID_p = 0.0
+x_PID_i = 0.0
+x_PID_d = 0.0
+x_PID_total = 0.0
 
 servo_angle = 60  # Wyjściowy sygnał dla położenia neutralnego
 
@@ -200,51 +206,90 @@ def map_value(value, in_min, in_max, out_min, out_max):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
      
 def PID_y(distance):
-    global distance_previous_error
-    global distance_error
+    global y_distance_previous_error
+    global y_distance_error
     global period
     global kp 
     global ki
     global kd
     global distance_setpoint
-    global PID_p
-    global PID_i
-    global PID_d
-    global PID_total
+    global y_PID_p
+    global y_PID_i
+    global y_PID_d
+    global y_PID_total
     
-    distance_error = distance_setpoint - distance
-    PID_p = kp * distance_error
-    dist_difference = distance_error - distance_previous_error
-    PID_d = kd * ((distance_error - distance_previous_error) / period)
+    y_distance_error = distance_setpoint - distance
+    y_PID_p = kp * y_distance_error
+    y_PID_d = kd * ((y_distance_error - y_distance_previous_error) / period)
 
-    if -30 < distance_error < 30:
-        PID_i += ki * distance_error
+    if -30 < y_distance_error < 30:
+        y_PID_i += ki * y_distance_error
     else:
-        PID_i = 0
+        y_PID_i = 0
 
-    PID_total = PID_p + PID_i + PID_d
-    print(f'pid_p: {PID_p},\npid_i: {PID_i},\npid_d: {PID_d},')
-    #print(PID_d)
-    #PID_total = (PID_total + 70) * 0.85
-    PID_total = map_value(PID_total, -190, 190, 45, 80)
+    y_PID_total = y_PID_p + y_PID_i + y_PID_d
+    print(f'y_PID_p: {y_PID_p},\npid_i: {y_PID_i},\npid_d: {y_PID_d},')
+    #print(y_PID_d)
+    #y_PID_total = (y_PID_total + 70) * 0.85
+    y_PID_total = map_value(y_PID_total, -190, 190, 45, 80)
     
 
 
-    if PID_total < 45:
-        PID_total = 45
-    if PID_total > 80:
-        PID_total = 80
+    if y_PID_total < 45:
+        y_PID_total = 45
+    if y_PID_total > 80:
+        y_PID_total = 80
 
-    distance_previous_error = distance_error
+    y_distance_previous_error = y_distance_error
         
-    #print (int(PID_total))
+    #print (int(y_PID_total))
     
-    return int(PID_total)
+    return int(y_PID_total)
+
+
+def PID_x(distance):
+    global x_distance_previous_error
+    global x_distance_error
+    global period
+    global kp
+    global ki
+    global kd
+    global distance_setpoint
+    global x_PID_p
+    global x_PID_i
+    global x_PID_d
+    global x_PID_total
+
+    x_distance_error = distance_setpoint - distance
+    x_PID_p = kp * x_distance_error
+    x_PID_d = kd * ((x_distance_error - x_distance_previous_error) / period)
+
+    if -30 < x_distance_error < 30:
+        x_PID_i += ki * x_distance_error
+    else:
+        x_PID_i = 0
+
+    x_PID_total = x_PID_p + x_PID_i + x_PID_d
+    print(f'x_PID_p: {x_PID_p},\npid_i: {x_PID_i},\npid_d: {x_PID_d},')
+    # print(x_PID_d)
+    # x_PID_total = (x_PID_total + 70) * 0.85
+    x_PID_total = map_value(x_PID_total, -190, 190, 45, 80)
+
+    if x_PID_total < 45:
+        x_PID_total = 45
+    if x_PID_total > 80:
+        x_PID_total = 80
+
+    x_distance_previous_error = x_distance_error
+
+    # print (int(x_PID_total))
+
+    return int(x_PID_total)
 
 def main(args=None):
     serial_port = serial.Serial('/dev/ttyACM0', 74880, timeout=1)
     serial_port.reset_input_buffer()
-    serial_port.write(b"80,65\n")
+    serial_port.write(b"60,65\n")
 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
@@ -271,11 +316,11 @@ def main(args=None):
         frame, result = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
         print(result)
         
-        servo_value = PID_y(-result[0])
+        servo_value_y = PID_y(-result[0])
+        servo_value_x = PID_x(-result[1])
         
-        
-        serial_port.write(b"%d,65\n"%servo_value)
-        #serial_port.write(b"60,65\n")
+        serial_port.write(b"%d,%d\n" % (servo_value_y, servo_value_x))
+        # serial_port.write(b"60,65\n")
     
         
         
