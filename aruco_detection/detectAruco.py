@@ -4,6 +4,7 @@ import cv2 as cv
 import json
 import numpy as np
 import math
+import serial
 from datetime import datetime
 
 """
@@ -89,8 +90,10 @@ def estimate_aruco_pose(frame, matrix_coeff, distortion_coeff, aruco_detector):
             # print(result)
             cv.circle(frame, ball_coordinates, 4, (0, 0, 255), -1)
             
+            return frame, result
+            
 
-    return frame
+    return frame, (0, 0)
 
 
 def detect_ball(frame, known_ball_size, camera_focal_len):
@@ -145,6 +148,9 @@ def find_intersection(segment_one, segment_two):
     
 
 def main(args=None):
+    #serial_port = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    #serial_port.reset_input_buffer()
+    #serial_port.write(b"60,65\n")
 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
     arucoParameters = cv.aruco.DetectorParameters()
@@ -165,7 +171,12 @@ def main(args=None):
     time.sleep(0.1)
 
     while True:
-        frame = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
+        #serial_port.write(b"%d,%d\n"%(counter, counter))
+        #line = serial_port.readline().decode('utf-8').rstrip()
+        #print(line)
+        
+        frame, result = estimate_aruco_pose(camera.capture_array(), mtx, dist, arucoDetector)
+        print(result)
         cv.imshow("Camera", frame)
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
