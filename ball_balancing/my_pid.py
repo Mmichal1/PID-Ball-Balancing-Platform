@@ -34,7 +34,7 @@ class MyPID:
             ((self.distance_error - self.distance_previous_error) / self.period)
 
         self.PID_total = self.PID_p + self.PID_i + self.PID_d
-        self.PID_total = self._map_value(self.PID_total, -190, 190, 41, 78)
+        self.PID_total = self._map_value(self.PID_total, -190, 190, self.servo_lower_bound, self.servo_upper_bound)
 
         if self.PID_total < self.servo_lower_bound:
             self.PID_total = self.servo_lower_bound

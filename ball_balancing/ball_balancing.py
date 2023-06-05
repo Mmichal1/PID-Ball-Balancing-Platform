@@ -36,7 +36,7 @@ def get_ball_dist_from_center(frame, matrix_coeff, distortion_coeff, aruco_detec
     frame = cv.bilateralFilter(frame, 9, 100, 100)
 
     # Process the frame, get the ball position and mark it on the frame 
-    ball_coordinates = detect_ball(frame, known_ball_size, int(matrix_coeff[0][0]))
+    ball_coordinates = detect_ball(frame)
 
     # Make the frame grayscale as the program doesn't need RGB values
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -80,20 +80,21 @@ def get_ball_dist_from_center(frame, matrix_coeff, distortion_coeff, aruco_detec
                     cv.line(frame, markers_center[i], markers_center[j], (0, 255, 0), 2)
                     list_of_segments.append(Segment(length=distance, start_point=(markers_center[i]), end_point=(markers_center[j]), start_tvec=(tvec[i]), end_tvec=(tvec[j])))
         
-
-        if len(list_of_segments) > 1:            
-            # Sort the segments by their length 
-            sorted_segments = sorted(list_of_segments, key=lambda p: p.length, reverse=True)
-            # The platform center will be the intersection between two longest segments which will be the diagonals
-            platform_center = find_intersection(sorted_segments[0], sorted_segments[1])
-            
-            # Check if the platform center is within the possible coordinates if not then keep the previous calculated center as the current one
-            if not (platform_center[0] > x_boundaries[0] and platform_center[0] < x_boundaries[1] and platform_center[1] > y_boundaries[0] and platform_center[1] < y_boundaries[1]):
-                platform_center = previous_platform_center
+            if len(list_of_segments) > 1:            
+                # Sort the segments by their length 
+                sorted_segments = sorted(list_of_segments, key=lambda p: p.length, reverse=True)
+                # The platform center will be the intersection between two longest segments which will be the diagonals
+                platform_center = find_intersection(sorted_segments[0], sorted_segments[1])
                 
-            previous_platform_center = platform_center
+                # Check if the platform center is within the possible coordinates if not then keep the previous calculated center as the current one
+                if not (platform_center[0] > x_boundaries[0] and platform_center[0] < x_boundaries[1] and platform_center[1] > y_boundaries[0] and platform_center[1] < y_boundaries[1]):
+                    platform_center = previous_platform_center
+                    
+                previous_platform_center = platform_center
+            else: 
+                platform_center = previous_platform_center
 
-        else: 
+        else:
             platform_center = previous_platform_center
             
         # Mark platform center on the frame 
@@ -108,16 +109,14 @@ def get_ball_dist_from_center(frame, matrix_coeff, distortion_coeff, aruco_detec
             if (result[0] > ball_x_boundaries[0] and result[0] < ball_x_boundaries[1] and result[1] > ball_y_boundaries[0] and result[1] < ball_y_boundaries[1]):
                 return frame, result
             
-            return frame, (0, 0)
-            
     return frame, (0, 0)
 
-def detect_ball(frame, known_ball_size, camera_focal_len):
+def detect_ball(frame):
     # Convert the image to HSV color space
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
-    # Define the lower and upper bounds for the ball color (example values)
-    lower_color = np.array([0, 150, 190])
+    # Define the lower and upper bounds for the ball color
+    lower_color = np.array([0, 150, 120])
     upper_color = np.array([180, 255, 255])
 
     # Create a mask for the ball color
@@ -161,7 +160,7 @@ def main(args=None):
     setpoint = 0
 
     # Init serial port connection
-    serial_port = serial.Serial('/dev/ttyACM0', 74880, timeout=1)
+    serial_port = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
     serial_port.reset_input_buffer()
     # Send signal to level the platform
     serial_port.write(b"60,65\n")
@@ -198,6 +197,7 @@ def main(args=None):
         # relation to the platform center. Mark all markers, ball position, platform center and all lines
         # on the frame
         frame, result = get_ball_dist_from_center(camera.capture_array(), mtx, dist, arucoDetector)
+        
         print(f'Ball coordinates: {result}')
         
         # Get values that should be sent to the servos based on the distance in each axis from the center

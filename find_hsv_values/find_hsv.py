@@ -5,7 +5,7 @@ def nothing(x):
     pass
 
 # Load image
-image = cv2.imread('1.jpg')
+image = cv2.imread('ball.jpg')
 
 # Create a window
 cv2.namedWindow('image')
@@ -60,5 +60,7 @@ while(1):
     cv2.imshow('image', result)
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
+    if cv2.waitKey(10) & 0xFF == ord('c'):
+        cv2.imwrite(f"camera_1.jpeg", result)
 
 cv2.destroyAllWindows()
