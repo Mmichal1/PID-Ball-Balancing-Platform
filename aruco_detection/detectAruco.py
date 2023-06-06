@@ -19,8 +19,8 @@ platform_middle = (300, 230)
 previous_platform_middle = (300, 230)
 x_boundaries = (280, 330)
 y_boundaries = (200, 260)
-ball_x_boundaries = (-220, 220)
-ball_y_boundaries = (-220, 220)
+ball_x_boundaries = (-230, 230)
+ball_y_boundaries = (-230, 230)
 #x_boundaries = (-4.0, 4.0)
 #y_boundaries = (-4.0, 4.0)
 #ball_x_boundaries = (-200.0, 200.0)
@@ -32,16 +32,16 @@ y_distance_previous_error = 0.0
 y_distance_error = 0.0
 x_distance_previous_error = 0.0
 x_distance_error = 0.0
-period = 0.05  # Czas odświeżania pętli w sekundach (50 ms)
+period = 0.05  # Czas odświeżania pętli w sekundach (50 ms) 0.05 bylo
 
 '''
-kp = 0.3
-ki = 0.02
+kp = 0.38
+ki = 0.022
 kd = 0.15
 '''
 
 # Ustalenie wartości stałych regulatora PID
-kp = 0.38
+kp = 0.39
 ki = 0.022
 kd = 0.1
 distance_setpoint = 0.0
@@ -219,8 +219,13 @@ def PID_y(distance):
     global y_PID_total
     
     y_distance_error = distance_setpoint - distance
-    y_PID_p = kp * y_distance_error
-    y_PID_d = kd * ((y_distance_error - y_distance_previous_error) / period)
+    #y_PID_p = kp * y_distance_error
+    if y_distance_previous_error==0.0 and x_distance_previous_error==0.0:
+        y_PID_d=0.0
+        y_PID_p=0.0
+    else:
+        y_PID_d = kd * ((y_distance_error - y_distance_previous_error) / period)
+        y_PID_p = kp * y_distance_error
 
     if -40 < y_distance_error < 40:
         y_PID_i += ki * y_distance_error
@@ -261,8 +266,13 @@ def PID_x(distance):
     global x_PID_total
 
     x_distance_error = distance_setpoint - distance
-    x_PID_p = kp * x_distance_error
-    x_PID_d = kd * ((x_distance_error - x_distance_previous_error) / period)
+    #x_PID_p = kp * x_distance_error
+    if x_distance_previous_error==0.0 and y_distance_previous_error==0.0:
+        x_PID_d=0.0
+        x_PID_p =0.0
+    else:
+        x_PID_d = kd * ((x_distance_error - x_distance_previous_error) / period)
+        x_PID_p = kp * x_distance_error
 
     if -40 < x_distance_error < 40:
         x_PID_i += ki * x_distance_error
@@ -273,10 +283,10 @@ def PID_x(distance):
     print(f'x_PID_p: {x_PID_p},\npid_i: {x_PID_i},\npid_d: {x_PID_d},')
     # print(x_PID_d)
     # x_PID_total = (x_PID_total + 70) * 0.85
-    x_PID_total = map_value(x_PID_total, -190, 190, 51, 86)
+    x_PID_total = map_value(x_PID_total, -190, 190, 47, 86)
 
-    if x_PID_total < 51:
-        x_PID_total = 51
+    if x_PID_total < 47:
+        x_PID_total = 47
     if x_PID_total > 86:
         x_PID_total = 86
 
