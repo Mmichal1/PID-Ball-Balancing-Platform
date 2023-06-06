@@ -137,7 +137,7 @@ def detect_ball(frame):
         (x, y), _ = cv.minEnclosingCircle(ball_contour)
         return (int(x), int(y))
 
-    return None, None
+    return None
 
 def find_intersection(segment_one, segment_two):
     # Read points coordinates
@@ -166,8 +166,8 @@ def main(args=None):
     serial_port.write(b"60,65\n")
 
     # Create PID instances for each axis
-    PID_x = MyPID(k_p=k_p, k_i=k_i, k_d=k_d, setpoint=setpoint, servo_lower_bound=51, servo_upper_bound=80)
-    PID_y = MyPID(k_p=k_p, k_i=k_i, k_d=k_d, setpoint=setpoint, servo_lower_bound=41, servo_upper_bound=78)
+    PID_x = MyPID(k_p=k_p, k_i=k_i, k_d=k_d, setpoint=setpoint, servo_lower_bound=51, servo_upper_bound=80, period=period, integral_bounds=40)
+    PID_y = MyPID(k_p=k_p, k_i=k_i, k_d=k_d, setpoint=setpoint, servo_lower_bound=41, servo_upper_bound=78, period=period, integral_bounds=40)
 
     # Init aruco detector 
     arucoDictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)

@@ -15,7 +15,7 @@ class MyPID:
         self.distance_previous_error = 0.0
         self.distance_error = 0.0
 
-    def _map_value(value, in_min, in_max, out_min, out_max):
+    def _map_value(self, value, in_min, in_max, out_min, out_max):
         return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
     def regulate(self, setpoint_error: int):
