@@ -1,5 +1,15 @@
-class MyPID:
-    def __init__(self, k_p: float, k_i: float, k_d: float, setpoint: int, period: float, servo_upper_bound: int, servo_lower_bound: int, integral_bounds: int):
+class PID:
+    def __init__(
+        self,
+        k_p: float,
+        k_i: float,
+        k_d: float,
+        setpoint: int,
+        period: float,
+        servo_upper_bound: int,
+        servo_lower_bound: int,
+        integral_bounds: int,
+    ):
         self.k_p = k_p
         self.k_i = k_i
         self.k_d = k_d
@@ -24,14 +34,13 @@ class MyPID:
         self.PID_p = self.k_p * self.distance_error
 
         # Integral
-        if - self.integral_bounds < self.distance_error < self.integral_bounds:
+        if -self.integral_bounds < self.distance_error < self.integral_bounds:
             self.PID_i += self.k_i * self.distance_error
         else:
             self.PID_i = 0
 
         # Derivative
-        self.PID_d = self.k_d * \
-            ((self.distance_error - self.distance_previous_error) / self.period)
+        self.PID_d = self.k_d * ((self.distance_error - self.distance_previous_error) / self.period)
 
         self.PID_total = self.PID_p + self.PID_i + self.PID_d
         self.PID_total = self._map_value(self.PID_total, -190, 190, self.servo_lower_bound, self.servo_upper_bound)
@@ -41,8 +50,7 @@ class MyPID:
         if self.PID_total > self.servo_upper_bound:
             self.PID_total = self.servo_upper_bound
 
-        print(
-            f'Y PID_p: {self.PID_p},\nY PID_i: {self.PID_i},\nY PID_d: {self.PID_d},\nY TOTAL:{int(self.PID_total)}')
+        print(f"Y PID_p: {self.PID_p},\nY PID_i: {self.PID_i},\nY PID_d: {self.PID_d},\nY TOTAL:{int(self.PID_total)}")
 
         self.distance_previous_error = self.distance_error
 
