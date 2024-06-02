@@ -1,6 +1,6 @@
 # PID Ball Balancing Platform
 
-Dual-axis ball balancing platform. The ball's location on the platform, relative to the center, is detected using a vision system, while the platform's tilt is controlled by a PID controller in each axis. This controller determines the positions of the servo mechanisms to maintain the ball at the center of the platform. Image processing and the PID controllers are implemented on a Raspberry Pi 4 mini-computer with a Raspberry Pi camera, and the servo mechanisms are controlled indirectly through UART communication with an Arduino Uno.
+Dual-axis ball balancing platform. The ball's location on the platform, relative to the center, is detected using a vision system, while the platform's tilt is controlled by a PID controller in each axis. This controller determines the positions of the servo mechanisms to maintain the ball at the center of the platform. Image processing and the PID controllers are implemented on a Raspberry Pi 4 mini-computer with a Raspberry Pi camera, and the servo mechanisms are controlled indirectly through serial port communication with an Arduino Uno.
 
 ## Ball detection and localization
 
